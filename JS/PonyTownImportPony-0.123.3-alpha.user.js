@@ -1825,7 +1825,23 @@
         return document.body.getAttribute('data-version');
     }
 
-    if (get_version() == version && SendPonyModule.account_id() != "---") {
-        PonyButtonModule.checkAndAddButtonInterval();
+    async function getScriptVersion() {
+        const response = await fetch('https://ponyjs.lonel.uno/ponyimport/');
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const version = doc.querySelector('meta[name="script-version"]').getAttribute('content');
+        return version;
+    }
+    
+    if (get_version() == version) {
+        if(SendPonyModule.account_id() != "---")
+            PonyButtonModule.checkAndAddButtonInterval();
+    }
+    else {
+        getScriptVersion().then(scriptversion => {
+            if(scriptversion != version)
+                window.open(`https://ponyjs.lonel.uno/ponyimport/JS/PonyTownImportPony-latest.user.js?_=${Math.floor(Date.now() / 1000)}`, '_blank');
+        });
     }
 })();
