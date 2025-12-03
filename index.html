@@ -16,6 +16,12 @@
             --text-light: #888;
             --card-shadow: 0 4px 8px rgba(0,0,0,0.1);
             --border-radius: 10px;
+            --orange-color: #FF9800;
+            --orange-hover: #F57C00;
+            --orange-light: #FFF3E0;
+            --red-color: #F44336;
+            --red-hover: #D32F2F;
+            --red-light: #FFEBEE;
         }
         * {
             margin: 0;
@@ -55,6 +61,25 @@
             display: inline-block;
             font-weight: 500;
             box-shadow: 0 2px 5px rgba(8, 230, 0, 0.1);
+        }
+        .version-warning {
+            background-color: var(--red-light);
+            color: var(--red-color);
+            padding: 12px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin: 15px auto;
+            display: none;
+            inline-block;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(244, 67, 54, 0.1);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            animation: warningPulse 2s infinite;
+        }
+        @keyframes warningPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
         }
         .install-btn {
             padding: 12px 25px;
@@ -105,6 +130,50 @@
             font-size: 14px;
             text-align: left;
             line-height: 1.4;
+        }
+        .extension-links {
+            margin: 25px auto;
+            padding: 15px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            max-width: 300px;
+            border-left: 4px solid var(--orange-color);
+        }
+        .extension-links h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: var(--orange-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .extension-links h3::before {
+            content: "⚠️";
+            font-size: 18px;
+        }
+        .extension-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+            margin: 8px 0;
+            background-color: var(--orange-light);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            color: var(--orange-hover);
+            border: 1px solid rgba(255, 152, 0, 0.3);
+        }
+        .extension-btn:hover {
+            background-color: rgba(255, 152, 0, 0.2);
+            transform: translateY(-1px);
+        }
+        .extension-btn img {
+            width: 20px;
+            height: 20px;
         }
         .footer {
             margin-top: 40px;
@@ -215,11 +284,24 @@
         <div class="version-notice" id="versionNotice">
             当前支持版本: <span id="scriptVersion">0.1xx.x-alpha</span>
         </div>
+        <div class="version-warning" id="versionWarning">
+            ⚠️ 检测到您安装的版本 (<span id="installedVersion"></span>) 低于当前支持版本 请重新安装！
+        </div>
         
         <button class="install-btn" onclick="showInstallModal()">
             <span style="display:block; margin-bottom: 2px;">🎨 安装皮肤导入脚本</span>
             <span style="font-size: 12px; opacity: 0.9;">需要Tampermonkey(篡改猴)<br>或ScriptCat(脚本猫)扩展支持</span>
         </button>
+    </div>
+
+    <div class="extension-links">
+        <h3>🔧 *安装扩展 (必装一项)</h3>
+        <div class="extension-btn" onclick="window.open('https://scriptcat.org/', '_blank')">
+            <span>🐱ScriptCat(脚本猫)(推荐)</span>
+        </div>
+        <div class="extension-btn" onclick="window.open('https://www.tampermonkey.net/', '_blank')">
+            <span>🐵Tampermonkey(篡改猴)</span>
+        </div>
     </div>
 
     <div class="intro-images">
@@ -282,6 +364,53 @@
     <script>
         document.getElementById('scriptVersion').textContent = SCRIPT_VERSION;
 
+        function checkVersionFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const versionParam = urlParams.get('version');
+
+            if (versionParam && compareVersions(SCRIPT_VERSION, versionParam) > 0) {
+                const warningElement = document.getElementById('versionWarning');
+                const installedVersionElement = document.getElementById('installedVersion');
+                
+                installedVersionElement.textContent = versionParam;
+                warningElement.style.display = 'inline-block';
+                
+                setTimeout(() => {
+                    warningElement.style.opacity = '0.9';
+                }, 100);
+            }
+        }
+
+        function compareVersions(version1, version2) {
+            const parseVersion = (v) => {
+                return v.split(/[.-]/).map(part => {
+                    const num = parseInt(part, 10);
+                    return isNaN(num) ? part : num;
+                });
+            };
+
+            const v1Parts = parseVersion(version1);
+            const v2Parts = parseVersion(version2);
+
+            const maxLength = Math.max(v1Parts.length, v2Parts.length);
+            for (let i = 0; i < maxLength; i++) {
+                const v1 = v1Parts[i] !== undefined ? v1Parts[i] : 0;
+                const v2 = v2Parts[i] !== undefined ? v2Parts[i] : 0;
+
+                if (typeof v1 === 'number' && typeof v2 === 'number') {
+                    if (v1 < v2) return -1;
+                    if (v1 > v2) return 1;
+                } else {
+                    const strV1 = String(v1);
+                    const strV2 = String(v2);
+                    if (strV1 < strV2) return -1;
+                    if (strV1 > strV2) return 1;
+                }
+            }
+
+            return 0;
+        }
+
         function showInstallModal() {
             document.getElementById('installModal').style.display = 'flex';
         }
@@ -296,7 +425,7 @@
 
             switch (platform) {
                 case 'scriptcat':
-                    scriptUrl = `https://scriptcat.org/scripts/code/4766/PonyTownImportPony.user.js`;
+                    scriptUrl = `https://scriptcat.org/scripts/code/4787/PonyTownImportPony.user.js`;
                     break;
                 case 'greasyfork':
                     scriptUrl = `https://update.greasyfork.org/scripts/557423/PonyTownImportPony.user.js`;
@@ -318,7 +447,7 @@
             
             switch (platform) {
                 case 'scriptcat':
-                    homepageUrl = 'https://scriptcat.org/zh-CN/script-show-page/4766';
+                    homepageUrl = 'https://scriptcat.org/zh-CN/script-show-page/4787';
                     break;
                 case 'greasyfork':
                     homepageUrl = 'https://greasyfork.org/zh-CN/scripts/557423-ponytownimportpony';
@@ -338,6 +467,8 @@
         document.getElementById('installModal').addEventListener('click', function(e) {
             if (e.target === this) closeModal();
         });
+
+        window.addEventListener('DOMContentLoaded', checkVersionFromURL);
     </script>
 </body>
 </html>

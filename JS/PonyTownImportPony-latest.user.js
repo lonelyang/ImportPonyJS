@@ -125,10 +125,6 @@
             return vxi(parsed);
         }
 
-        function getPonyType(parsed) {
-            return CY(parsed);
-        }
-
         function getPonyName(parsed) {
             return gxi(parsed);
         }
@@ -139,6 +135,10 @@
 
         function getPonyDesc(parsed) {
             return gxi(parsed);
+        }
+
+        function getPonyDescOld(parsed) {
+            return fxi(parsed);
         }
 
         function getPonySupporterTag(parsed) {
@@ -307,13 +307,12 @@
                 const version = getPonyDataVersion(parsed);
                 if (version > 4) return null;
                 if (version < 3) parsed.legacyMode = true;
-                const length = getPonyDataVersion(parsed);
-                if (length > 25) return null;
+                if (Zki(parsed) > 25) return null;
                 const ponyList = [];
                 const count = getPonyItemCount(parsed);
                 for (let i = 0; i < count; ++i) {
                     let ponyData;
-                    if (length >= 4) {
+                    if (version >= 4) {
                         const e = Zki(parsed);
                         const type = (flag) => CY(e, flag);
                         const name = getPonyName(parsed);
@@ -323,23 +322,19 @@
                         const supporterTag = type(4) ? getPonySupporterTag(parsed) : void 0;
                         const backgroundColor = type(8) ? getPonyBackgroundColor(parsed) : void 0;
                         const toy = type(16) ? getPonyToy(parsed) : 0;
-                        if(!Safe_Mode) {
-                            ponyData = createPonyData(name, look, desc, respawnAtSpawn, supporterTag, backgroundColor, toy);
-                        }
-                        else {
-                            ponyData = createPonyData(name, look, "", void 0, void 0, void 0, 0);
-                        }
+                        if(!Safe_Mode) ponyData = createPonyData(name, look, desc, respawnAtSpawn, supporterTag, backgroundColor, toy);
+                        else ponyData = createPonyData(name=="Pony"?name+i.toString():name, look, "", void 0, void 0, void 0, 0);
                     }
                     else {
                         const name = getPonyName(parsed);
                         const look = getPonyLook(parsed);
-                        const desc = getPonyDesc(parsed);
-                        const respawnAtSpawn = length >= 1 && checkLegacyFlag(parsed);
-                        const supporterTag = length >= 1 ? getPonySupporterTag(parsed) : 0;
+                        const desc = getPonyDescOld(parsed);
+                        const respawnAtSpawn = version >= 1 && checkLegacyFlag(parsed);
+                        const supporterTag = version >= 1 ? getPonySupporterTag(parsed) : 0;
                         let backgroundColor;
-                        if (length >= 2 && checkLegacyFlag(parsed)) backgroundColor = getPonybackgroundColor(parsed);
+                        if (version >= 2 && checkLegacyFlag(parsed)) backgroundColor = getPonyBackgroundColor(parsed);
                         if(!Safe_Mode) ponyData = createPonyData(name, look, desc, respawnAtSpawn, supporterTag, backgroundColor, 0);
-                        else ponyData = createPonyData(name, look, "", void 0, 0, void 0, 0);
+                        else ponyData = createPonyData(name=="Pony"?name+i.toString():name, look, "", void 0, 0, void 0, 0);
                     }
                     ponyData && ponyList.push(ponyData);
                 }
@@ -530,8 +525,11 @@
                 }
 
                 const { ponies: ponyList, deprecated: isDeprecated } = parsedResult;
+                const total = ponyList.length;
+                const { updateProgress, removeProgress } = PonyButtonModule.createProgressBar(total);
 
                 let importedCount = 0;
+                let failureCount = 0;
                 let skippedCount = 0;
                 let reachLimit = false;
                 let importLimit = false;
@@ -543,6 +541,8 @@
                         const processedPony = p_o(pony);
                         if (!processedPony) {
                             skippedCount++;
+                            failureCount++;
+                            updateProgress(index + 1, importedCount, failureCount, skippedCount);
                             //console.log(`第 ${index + 1} 个小马数据预处理失败，跳过`, "warn");
                             continue;
                         }
@@ -551,25 +551,36 @@
                         //console.log(`第 ${index + 1} 个小马数据编译成功: ${ponysaveData}`, "success");
                         try {
                             const result = await SendPonyModule.sendPony(ponysaveData);
-                            if (result.status === 200) {
+                            if (result.status) {
+                                importedCount++;
                                 console.log(`第 ${index + 1} 个小马数据导入成功: ${processedPony.name || "未知"}`, "success");
                             } else {
+                                failureCount++;
                                 console.log(`第 ${index + 1} 个小马数据导入失败: ${processedPony.name || "未知"}, 原因: ${result.content || "未知"}`, "error");
                             }
                         } catch (err) {
+                            failureCount++;
                             console.error(`第 ${index + 1} 个小马数据导入失败: ${processedPony.name || "未知"}, 原因: ${err.message || err || "未知"}`, "error");
                         }
-                        importedCount++;
-                        await delay(300);
                     } catch (error) {
-                        console.error(`第 ${index + 1} 个小马数据导入失败: ${error.message}`, "error");
+                        failureCount++;
+                        console.error(`第 ${index + 1} 个小马数据编译失败: ${error.message}`, "error");
                     }
+                    updateProgress(index + 1, importedCount, failureCount, skippedCount);
+                    await delay(300);
                 }
+
+                removeProgress();
 
                 const resultTip = formatImportTips(importedCount, skippedCount, reachLimit, importLimit, isDeprecated);
                 console.log(`导入完成：${resultTip}`, "success");
 
+                PonyButtonModule.showCustomAlert(navigator.language.startsWith("zh") ? `共 ${total} 个小马皮肤<br>成功导入 ${importedCount} 个<br>导入失败 ${failureCount} 个` : `A total of ${total} pony character${total !== 1 ? 's' : ''}<br> ${importedCount} successfully imported<br> ${failureCount} failed to import`);
+
+                //alert(`文件内共 ${total} 个小马皮肤\n成功导入 ${importedCount} 个小马皮肤\n导入失败 ${failureCount} 个小马皮肤 `)
+
             } catch (error) {
+                removeProgress();
                 console.log(`全局导入错误: ${error.message}`, "error");
             }
         }
@@ -1804,11 +1815,18 @@
                                 console.log("文件导入完成：", file.name);
                             } catch (error) {
                                 console.error("文件导入失败：", error.message || error);
+                            } finally {
+                                event.target.value = '';
                             }
+                        };
+                        reader.onerror = () => {
+                            console.error("文件读取失败");
+                            event.target.value = '';
                         };
                         reader.readAsText(file);
                     } else {
                         console.warn("不支持的文件类型：", file.name);
+                        event.target.value = '';
                     }
                 });
             }
@@ -1818,30 +1836,202 @@
             setInterval(checkAndAddButton, 1000);
         }
 
-        return { checkAndAddButtonInterval };
+        function createProgressBar(total) {
+            const progressContainer = document.createElement("div");
+            progressContainer.id = "progressContainer";
+            Object.assign(progressContainer.style, {
+                position: "fixed",
+                top: "0",
+                left: "0",
+                width: "100%",
+                background: "#212121",
+                zIndex: "999999",
+                boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
+                fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                borderBottom: "1px solid #444444"
+            });
+        
+            const progressBar = document.createElement("div");
+            progressBar.id = "progressBar";
+            Object.assign(progressBar.style, {
+                height: "4px",
+                width: "0%",
+                background: "#EAEAEA",
+                transition: "width 0.3s ease-out"
+            });
+        
+            const progressText = document.createElement("div");
+            progressText.id = "progressText";
+            Object.assign(progressText.style, {
+                padding: "8px 15px",
+                fontSize: "14px",
+                color: "#EEE",
+                fontWeight: "500",
+                textAlign: "center"
+            });
+            progressText.textContent = navigator.language.startsWith("zh") 
+                ? `导入中... 0/${total}` 
+                : `Importing... 0/${total}`;
+        
+            progressContainer.appendChild(progressBar);
+            progressContainer.appendChild(progressText);
+            document.body.appendChild(progressContainer);
+        
+            function updateProgress(current, imported, failed, skipped) {
+                const progress = Math.round((current / total) * 100);
+                progressBar.style.width = `${progress}%`;
+                
+                const isChinese = navigator.language.startsWith("zh");
+                progressText.textContent = isChinese
+                    ? `导入中... ${current}/${total} (${imported} 成功, ${failed} 失败${skipped > 0 ? `, ${skipped} 跳过` : ''})`
+                    : `Importing... ${current}/${total} (${imported} succeeded, ${failed} failed${skipped > 0 ? `, ${skipped} skipped` : ''})`;
+            }
+        
+            function removeProgress() {
+                if (progressContainer && document.body.contains(progressContainer)) {
+                    document.body.removeChild(progressContainer);
+                }
+            }
+        
+            return {
+                updateProgress,
+                removeProgress
+            };
+        }
+
+        const showCustomAlert = (message) => {
+            const overlay = document.createElement("div");
+            overlay.style = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 9999;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            `;
+            
+            const alertBox = document.createElement("div");
+            alertBox.style = `
+                position: relative;
+                width: 90%;
+                max-width: 400px;
+                background-color: #212121;
+                border-radius: 4px;
+                box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+                animation: slideUp 0.3s ease-out;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                user-select: none;
+            `;
+            
+            alertBox.innerHTML = `
+                <h4 style="margin-bottom: 0; border-bottom: 1px solid #444; padding: 1.0rem; color: #EEEEEE; font-size: 1.275rem; line-height: 1.5;">${navigator.language.startsWith("zh") ? "导入小马" : "Import Ponies"}</h4>
+                <p style="margin: 0 0 0px; padding: 1rem; color: #929292; line-height: 1.5; text-align: center;">${message}</p>
+                <div style="padding: 1.0rem 0.75rem; border-top: 1px solid #444; display: flex; justify-content: flex-end;">
+                <button id="closeAlert" style="border: 1px solid #6c757d; border-radius: 3px; padding: 0.375rem 0.75rem; font-size: 1rem; text-align: center; cursor: pointer; transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;">${navigator.language.startsWith("zh") ? "关闭" : "Close"}</button>
+                </div>
+            `;
+            
+            const styleTag = document.createElement("style");
+            styleTag.textContent = `
+                @keyframes slideUp {
+                    from { 
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to { 
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                #closeAlert {
+                    color: #6c757d;
+                    background-color: #212121;
+                    border-color: #6c757d;
+                }
+                #closeAlert:hover {
+                    color: #FFF;
+                    background-color: #6C757D;
+                    border-color: #6c757d;
+                }
+                #closeAlert:active {
+                    color: #FFF;
+                    background-color: #6C757D;
+                    border-color: #6c757d;
+                }
+            `;
+            
+            document.head.appendChild(styleTag);
+            overlay.appendChild(alertBox);
+            document.body.appendChild(overlay);
+            
+            document.getElementById("closeAlert").onclick = () => {
+                document.body.removeChild(overlay);
+                document.head.removeChild(styleTag);
+            };
+            
+            overlay.onclick = (e) => {
+                if (e.target === overlay) {
+                    document.body.removeChild(overlay);
+                    document.head.removeChild(styleTag);
+                }
+            };
+            
+            document.onkeydown = (e) => {
+                if (e.key === "Escape") {
+                    document.body.removeChild(overlay);
+                    document.head.removeChild(styleTag);
+                }
+            };
+        };
+
+
+        return { checkAndAddButtonInterval, createProgressBar, showCustomAlert };
     })();
 
-    function get_version(){
-        return document.body.getAttribute('data-version');
-    }
+    const PonyVersionModule = (() => {
+        function get_version() {
+            return document.body.getAttribute('data-version');
+        }
 
-    async function getScriptVersion() {
-        const response = await fetch('https://ponyjs.lonel.uno/ponyimport/');
-        const html = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const version = doc.querySelector('meta[name="script-version"]').getAttribute('content');
-        return version;
-    }
-    
-    if (get_version() == version) {
-        if(SendPonyModule.account_id() != "---")
-            PonyButtonModule.checkAndAddButtonInterval();
-    }
-    else {
-        getScriptVersion().then(scriptversion => {
-            if(scriptversion != version)
-                window.open(`https://ponyjs.lonel.uno/ponyimport/JS/PonyTownImportPony-latest.user.js?_=${Math.floor(Date.now() / 1000)}`, '_blank');
-        });
-    }
+        async function getScriptVersion() {
+            const response = await fetch('https://ponyjs.lonel.uno/ponyimport/');
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const version = doc.querySelector('meta[name="script-version"]').getAttribute('content');
+            return version;
+        }
+
+        function runAfterDOMLoaded(callback) {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', callback);
+            } else {
+                callback();
+            }
+        }
+        
+        function runScript() {
+            runAfterDOMLoaded(function() {
+                if (get_version() == version) {
+                    if (SendPonyModule.account_id() != "---") {
+                        PonyButtonModule.checkAndAddButtonInterval();
+                    }
+                } else {
+                    getScriptVersion().then(scriptversion => {
+                        if (scriptversion != version) {
+                            window.open(`https://ponyjs.lonel.uno/ponyimport?version=${version}`, '_blank');
+                        }
+                    });
+                }
+            });
+        }
+
+        return { runScript };
+    })();
+
+    PonyVersionModule.runScript();
 })();
