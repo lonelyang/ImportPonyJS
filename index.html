@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="script-version" content="1.0.0-alpha">
+    <script>const SCRIPT_VERSION = "1.0.0-alpha";</script>
+    <title>PonyTown皮肤导入</title>
+    <style>
+        :root {
+            --primary-color: #9C27B0;
+            --primary-hover: #7B1FA2;
+            --secondary-color: #673AB7;
+            --text-dark: #333;
+            --text-medium: #666;
+            --text-light: #888;
+            --card-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            --border-radius: 10px;
+            --orange-color: #FF9800;
+            --orange-hover: #F57C00;
+            --orange-light: #FFF3E0;
+            --red-color: #F44336;
+            --red-hover: #D32F2F;
+            --red-light: #FFEBEE;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        body {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 25px 15px;
+            text-align: center;
+            background-color: #f9f9f9;
+            color: var(--text-dark);
+        }
+        .header {
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: var(--primary-color);
+            font-size: 24px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .header p {
+            color: var(--text-medium);
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        .version-notice {
+            background-color: #E0FFE0;
+            color: #0FEE0F;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin: 15px auto;
+            display: inline-block;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(8, 230, 0, 0.1);
+        }
+        .version-warning {
+            background-color: var(--red-light);
+            color: var(--red-color);
+            padding: 12px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin: 15px auto;
+            display: none;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(244, 67, 54, 0.1);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            animation: warningPulse 2s infinite;
+        }
+        @keyframes warningPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        .install-btn {
+            padding: 12px 25px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 20px auto;
+            display: block;
+            width: 80%;
+            max-width: 300px;
+            box-shadow: 0 4px 6px rgba(156, 39, 176, 0.2);
+        }
+        .install-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(156, 39, 176, 0.3);
+        }
+        .intro-images {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .intro-card {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            background: white;
+            transition: transform 0.3s ease;
+        }
+        .intro-card:hover {
+            transform: translateY(-5px);
+        }
+        .intro-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-bottom: 1px solid #eee;
+        }
+        .intro-card p {
+            padding: 15px;
+            color: var(--text-dark);
+            font-size: 14px;
+            text-align: left;
+            line-height: 1.4;
+        }
+        .extension-links {
+            margin: 25px auto;
+            padding: 15px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            max-width: 300px;
+            border-left: 4px solid var(--orange-color);
+        }
+        .extension-links h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: var(--orange-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .extension-links h3::before {
+            content: "⚠️";
+            font-size: 18px;
+        }
+        .extension-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+            margin: 8px 0;
+            background-color: var(--orange-light);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            color: var(--orange-hover);
+            border: 1px solid rgba(255, 152, 0, 0.3);
+        }
+        .extension-btn:hover {
+            background-color: rgba(255, 152, 0, 0.2);
+            transform: translateY(-1px);
+        }
+        .extension-btn img {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .video-container {
+            margin: 30px auto;
+            max-width: 500px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+        }
+        .video-title {
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-dark);
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+        .video-wrapper {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            background: #000;
+        }
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .video-description {
+            padding: 15px;
+            font-size: 14px;
+            color: var(--text-medium);
+            text-align: left;
+            line-height: 1.5;
+            border-top: 1px solid #eee;
+        }
+
+        .qq-group-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 20px;
+            margin: 5px auto;
+            background-color: #12B7F5;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(18, 183, 245, 0.3);
+            text-decoration: none;
+        }
+        .qq-group-btn:hover {
+            background-color: #0E9FD8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(18, 183, 245, 0.4);
+        }
+        .qq-group-btn svg {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal {
+            background-color: white;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            animation: modalFadeIn 0.3s ease;
+        }
+        .modal-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .modal-body {
+            padding: 20px;
+            text-align: left;
+        }
+        .modal-body p {
+            margin-bottom: 15px;
+            color: var(--text-medium);
+            line-height: 1.5;
+        }
+        .modal-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .modal-option-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .modal-option-btn {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .modal-option-btn:hover {
+            background-color: #f0f0f0;
+            transform: translateY(-1px);
+        }
+        .modal-option-btn.primary {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        .modal-option-btn.primary:hover {
+            background-color: var(--primary-hover);
+        }
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s ease;
+        }
+        .home-btn:hover {
+            background-color: #f0f0f0;
+            transform: translateY(-1px);
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>PonyTown皮肤导入</h1>
+        <p>轻松导入PTC皮肤文件</p>
+        
+        <div class="version-notice" id="versionNotice">
+            当前支持版本: <span id="scriptVersion">0.1xx.x-alpha</span>
+        </div>
+        <div class="version-warning" id="versionWarning">
+            ⚠️ 检测到您安装的版本 (<span id="installedVersion"></span>) 低于当前支持版本 请重新安装！
+        </div>
+        <div>
+            <a href="https://qm.qq.com/q/4ClK5NeNbi" target="_blank" class="qq-group-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="0.96em" height="1em" viewBox="0 0 24 25"><path fill="currentColor" d="M6.795 3.035C8.052 1.24 10.013.042 12.75.042s4.697 1.197 5.954 2.994c1.24 1.773 1.775 4.097 1.775 6.372c0 .137-.004.334-.007.497l-.004.2l.99 2.479c.284.74.568 1.519.777 2.193c.498 1.6.677 2.76.691 3.547c.008.39-.025.71-.09.951a1.2 1.2 0 0 1-.153.355a.68.68 0 0 1-.479.311c-.269.033-.49-.096-.603-.171a2.5 2.5 0 0 1-.384-.332a8.5 8.5 0 0 1-.752-.922a7.1 7.1 0 0 1-1.605 2.86c.386.159.771.352 1.074.577c.288.215.47.474.533.76a.97.97 0 0 1-.102.7a.8.8 0 0 1-.341.304c-.104.052-.219.09-.328.119a5 5 0 0 1-.786.127a23 23 0 0 1-2.136.08c-1.528-.003-3.206-.092-4.02-.179c-.815.087-2.492.176-4.02.178c-.784.002-1.544-.02-2.137-.079a5 5 0 0 1-.786-.127a1.7 1.7 0 0 1-.328-.12a.8.8 0 0 1-.34-.302a.97.97 0 0 1-.104-.702c.063-.287.246-.546.534-.76a5.2 5.2 0 0 1 1.073-.575a7.1 7.1 0 0 1-1.606-2.862l-.036.05a8.5 8.5 0 0 1-.715.873c-.118.121-.25.241-.385.332c-.112.075-.334.204-.602.171H3.3a.68.68 0 0 1-.477-.31a1.2 1.2 0 0 1-.155-.355q-.1-.366-.092-.952c.014-.787.192-1.948.688-3.547c.21-.674.493-1.453.777-2.194l.003-.007l.988-2.47l-.011-.698c0-2.275.535-4.6 1.775-6.373"/></svg>
+                <span>加入QQ交流群!</span>
+            </a>
+        </div>
+        <button class="install-btn" onclick="showInstallModal()">
+            <span style="display:block; margin-bottom: 2px;">🎨 安装皮肤导入脚本</span>
+            <span style="font-size: 12px; opacity: 0.9;">需要Tampermonkey(篡改猴)<br>或ScriptCat(脚本猫)扩展支持</span>
+        </button>
+    </div>
+
+    <div class="extension-links">
+        <h3>🔧 *安装扩展 (必装一项)</h3>
+        <div class="extension-btn" onclick="window.open('https://scriptcat.org/', '_blank')">
+            <span>🐱ScriptCat(脚本猫)(推荐)</span>
+        </div>
+        <div class="extension-btn" onclick="window.open('https://www.tampermonkey.net/', '_blank')">
+            <span>🐵Tampermonkey(篡改猴)</span>
+        </div>
+    </div>
+
+    <div class="video-container">
+        <div class="video-title">
+            🎥 皮肤导入工具安装教程视频
+        </div>
+        <div class="video-wrapper">
+            <iframe 
+                src="https://player.bilibili.com/player.html?bvid=BV1MaSmB6E46&page=1&high_quality=1&danmaku=0&autoplay=1" 
+                allow="autoplay; fullscreen">
+            </iframe>
+        </div>
+        <div class="video-description">
+            📌 本教程详细演示了如何使用皮肤导入脚本 包括安装步骤和实际使用方法
+        </div>
+    </div>
+
+    <div class="intro-images">
+        <div class="intro-card">
+            <img src="./image/547d4437-9fd6-4bc0-842c-97ac72598543.png?_=MY" alt="一键导入">
+            <p>👆 一键导入：安装即用 无需配置</p>
+        </div>
+        <div class="intro-card">
+            <img src="./image/68d7e148-02c9-408e-a14f-c7fa865b0111.png?_=LITTLE" alt="绝对安全">
+            <p>📦 绝对安全：完全模拟 原版逻辑</p>
+        </div>
+        <div class="intro-card">
+            <img src="./image/8241169a-9975-441e-914e-a186394907e9.png?_=PONY" alt="更新迅速">
+            <p>⚙️ 更新迅速：快速更新 保证可用</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>© 2025 PonyTown皮肤导入 | 非官方工具</p>
+    </div>
+
+    <!-- 弹窗结构 -->
+    <div class="modal-overlay" id="installModal">
+        <div class="modal">
+            <div class="modal-header">
+                选择安装方式
+            </div>
+            <div class="modal-body">
+                <p>请选择脚本托管站点：</p>
+                <div class="modal-options">
+                    <div class="modal-option-row">
+                        <button class="modal-option-btn primary" onclick="installScript('scriptcat')">
+                            🐱 ScriptCat(脚本猫)(推荐)
+                        </button>
+                        <button class="home-btn" onclick="openHomepage('scriptcat')" title="访问ScriptCat脚本主页">🏠</button>
+                    </div>
+                    <div class="modal-option-row">
+                        <button class="modal-option-btn" onclick="installScript('local')">
+                            📦 PonyImport(本地)
+                        </button>
+                        <button class="home-btn" onclick="openHomepage('local')" title="访问当前脚本主页">🏠</button>
+                    </div>
+                    <div class="modal-option-row">
+                        <button class="modal-option-btn" onclick="installScript('github')">
+                            🌐 GitHub(仓库)
+                        </button>
+                        <button class="home-btn" onclick="openHomepage('github')" title="访问GitHub脚本主页">🏠</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('scriptVersion').textContent = SCRIPT_VERSION;
+
+        function checkVersionFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const versionParam = urlParams.get('version');
+
+            if (versionParam && compareVersions(SCRIPT_VERSION, versionParam) > 0) {
+                const warningElement = document.getElementById('versionWarning');
+                const installedVersionElement = document.getElementById('installedVersion');
+                
+                installedVersionElement.textContent = versionParam;
+                warningElement.style.display = 'inline-block';
+                
+                setTimeout(() => {
+                    warningElement.style.opacity = '0.9';
+                }, 100);
+            }
+        }
+
+        function compareVersions(version1, version2) {
+            const parseVersion = (v) => {
+                return v.split(/[.-]/).map(part => {
+                    const num = parseInt(part, 10);
+                    return isNaN(num) ? part : num;
+                });
+            };
+
+            const v1Parts = parseVersion(version1);
+            const v2Parts = parseVersion(version2);
+
+            const maxLength = Math.max(v1Parts.length, v2Parts.length);
+            for (let i = 0; i < maxLength; i++) {
+                const v1 = v1Parts[i] !== undefined ? v1Parts[i] : 0;
+                const v2 = v2Parts[i] !== undefined ? v2Parts[i] : 0;
+
+                if (typeof v1 === 'number' && typeof v2 === 'number') {
+                    if (v1 < v2) return -1;
+                    if (v1 > v2) return 1;
+                } else {
+                    const strV1 = String(v1);
+                    const strV2 = String(v2);
+                    if (strV1 < strV2) return -1;
+                    if (strV1 > strV2) return 1;
+                }
+            }
+
+            return 0;
+        }
+
+        function showInstallModal() {
+            document.getElementById('installModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('installModal').style.display = 'none';
+        }
+
+        function installScript(platform) {
+            let scriptUrl = '';
+            const timestamp = Math.floor(Date.now() / 1000);
+
+            switch (platform) {
+                case 'scriptcat':
+                    scriptUrl = `https://scriptcat.org/scripts/code/4787/PonyTownImportPony.user.js`;
+                    break;
+                case 'github':
+                    scriptUrl = `https://raw.githubusercontent.com/lonelyang/ImportPonyJS/main/scripts/PonyTownImportPony-latest.user.js`;
+                    break;
+                case 'local':
+                    scriptUrl = `./scripts/PonyTownImportPony-latest.user.js?_=${timestamp}`;
+                    scriptUrl += '&charset=UTF-8';
+                    break;
+            }
+
+            closeModal();
+            window.open(scriptUrl, '_blank');
+        }
+
+        function openHomepage(platform) {
+            let homepageUrl = '';
+            
+            switch (platform) {
+                case 'scriptcat':
+                    homepageUrl = 'https://scriptcat.org/zh-CN/script-show-page/4787';
+                    break;
+                case 'github':
+                    homepageUrl = 'https://github.com/lonelyang/ImportPonyJS';
+                    break;
+                case 'local':
+                    homepageUrl = '#';
+                    window.location.href = './';
+                    return;
+            }
+            
+            window.open(homepageUrl, '_blank');
+        }
+
+        document.getElementById('installModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        window.addEventListener('DOMContentLoaded', checkVersionFromURL);
+    </script>
+</body>
+</html>
